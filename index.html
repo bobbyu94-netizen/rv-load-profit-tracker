@@ -1,1 +1,115 @@
-holder
+<!doctype html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LoadPilot</title>
+<style>
+:root{--b:#0f172a;--c:#111827;--t:#e5e7eb;--m:#94a3b8;--a:#38bdf8;--g:#22c55e;--w:#f59e0b;--r:#ef4444}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#164e63,#0f172a 500px);color:var(--t);font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+main,header{max-width:980px;margin:auto;padding:16px}h1{font-size:44px;margin:8px 0}p{color:var(--m)}.eyebrow{color:var(--a);font-weight:900;letter-spacing:.12em;text-transform:uppercase;font-size:12px}
+.card{background:#111c33dd;border:1px solid #ffffff22;border-radius:18px;padding:15px;margin:12px 0;box-shadow:0 12px 35px #0006}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}label{display:grid;gap:5px;color:var(--m);font-weight:800;font-size:13px}
+input,select,textarea{width:100%;border:1px solid #ffffff22;background:#02061788;color:var(--t);border-radius:12px;padding:12px;font:inherit}textarea{min-height:190px}
+button{border:0;border-radius:999px;padding:12px 15px;background:var(--a);font-weight:900;color:#031422}.secondary{background:#334155;color:var(--t)}.ghost{background:transparent;color:var(--t);border:1px solid #ffffff22}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;position:sticky;top:0;background:#0f172aea;padding:8px 0;z-index:2}.tab{background:#ffffff14;color:var(--t);font-size:13px;padding:10px 4px}.tab.active{background:var(--a);color:#031422}
+.panel{display:none}.panel.active{display:block}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}
+.pill,.box{background:#ffffff12;border:1px solid #ffffff22;border-radius:14px;padding:11px}.pill span,.box span,.metric span{display:block;color:var(--m);font-size:12px;font-weight:900;text-transform:uppercase}.pill strong,.box strong,.metric strong{font-size:21px}
+.load{border-left:6px solid var(--a)}.good{border-left-color:var(--g)}.warn{border-left-color:var(--w)}.bad{border-left-color:var(--r)}.top{display:flex;justify-content:space-between;gap:10px}.route{font-weight:950;font-size:18px}.score{font-weight:950;font-size:30px}
+.badge{display:inline-block;background:#38bdf824;color:#bae6fd;border-radius:999px;padding:4px 8px;margin:4px 4px 0 0;font-size:12px;font-weight:900}.details{display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));gap:9px;margin-top:12px}
+ul{color:var(--m)}.barrow{display:grid;grid-template-columns:60px 1fr 80px;gap:8px;align-items:center;margin:8px 0}.track{height:13px;background:#ffffff18;border-radius:999px;overflow:hidden}.fill{height:100%;background:var(--a)}
+.danger{background:#7f1d1d;color:#fecaca}@media(max-width:600px){h1{font-size:38px}.top{display:block}.score{text-align:left}}
+</style>
+</head>
+<body>
+<header><div class=eyebrow>RV transport business tracker</div><h1>LoadPilot</h1><p>Paste the load board, rank the best loads, track trips and expenses, and see profit.</p></header>
+<main>
+<section class=card><h2>Assumptions</h2><div class=grid>
+<label>Home base<input id=home value="Louisville, KY"></label><label>Loaded MPG<input id=mpg type=number value=15></label><label>Diesel<input id=diesel type=number step=.01 value=4.75></label><label>Hotel/night<input id=hotel type=number value=95></label><label>Meals/day<input id=meals type=number value=35></label><label>Tax %<input id=tax type=number value=25></label>
+</div><p><button class=secondary onclick="saveSettings()">Save assumptions</button></p></section>
+<nav class=tabs><button class="tab active" onclick="tab('analyze',this)">Analyze</button><button class=tab onclick="tab('trips',this)">Trips</button><button class=tab onclick="tab('expenses',this)">Expenses</button><button class=tab onclick="tab('dashboard',this)">Dashboard</button></nav>
+
+<section id=analyze class="panel active"><div class=card><h2>Paste load board</h2><p>Order: terminal, CDL type, origin, destination, miles.</p><textarea id=board></textarea><div class=actions><button onclick="analyze()">Analyze loads</button><button class=secondary onclick="sample()">Use sample</button><button class=ghost onclick="board.value='';results.innerHTML='';summary.innerHTML=''">Clear</button></div></div><div id=summary class=summary></div><div id=results></div></section>
+
+<section id=trips class=panel><div class=card><h2>Add trip</h2><div class=grid>
+<label>Terminal<select id=tTerm></select></label><label>Origin<input id=tOrig></label><label>Destination<input id=tDest></label><label>Miles<input id=tMiles type=number></label><label>Fuel<input id=tFuel type=number value=0></label><label>Hotels<input id=tHotels type=number value=0></label><label>Tolls<input id=tTolls type=number value=0></label><label>Meals<input id=tMeals type=number value=0></label><label>Return cost<input id=tReturn type=number value=0></label><label>Other<input id=tOther type=number value=0></label>
+<label style="grid-column:1/-1">Lessons learned<textarea id=tNotes></textarea></label></div><p><button onclick="addTrip()">Save trip</button></p></div><div id=tripList></div></section>
+
+<section id=expenses class=panel><div class=card><h2>Add expense</h2><div class=grid>
+<label>Date<input id=eDate type=date></label><label>Category<select id=eCat><option>Fuel</option><option>Hotel</option><option>Meals</option><option>Tolls</option><option>Flight / ride home</option><option>Maintenance</option><option>Supplies</option><option>Insurance</option><option>Other</option></select></label><label>Amount<input id=eAmt type=number></label><label>Trip note<input id=eTrip></label><label>Receipt photo<input id=eFile type=file accept=image/*></label></div><p><button onclick="addExpense()">Save expense</button></p></div><div id=expenseList></div></section>
+
+<section id=dashboard class=panel><div class="grid" id=metrics></div><div class=card><h2>Profit by terminal</h2><div id=bars></div></div><div class=card><h2>Best completed trips</h2><div id=best></div></div></section>
+</main>
+<script>
+const rates={FLA:[1.15,'PTR'],POH:[1.52,'PETE'],DRD:[1.17,'RV'],GMI:[1.12,'Box'],MCA:[1.12,'MCA']};
+const coords={'LOUISVILLE, KY':[38.25,-85.76],'BRISTOL, IN':[41.72,-85.82],'CLEVELAND, OH':[41.5,-81.69],'MADISONVILLE, KY':[37.33,-87.5],'MADISON, TN':[36.26,-86.71],'SALISBURY, NC':[35.67,-80.47],'ELOY, AZ':[32.76,-111.55],'PHOENIX, AZ':[33.45,-112.07],'KANSAS CITY, KS':[39.11,-94.63],'DES MOINES, IA':[41.59,-93.63],'ATLANTA, GA':[33.75,-84.39],'TIFTON, GA':[31.45,-83.51],'AKRON, OH':[41.08,-81.52],'MILLEDGEVILLE, GA':[33.08,-83.23],'TAMPA, FL':[27.95,-82.46],'OCALA, FL':[29.19,-82.14],'ST ALBANS, VT':[44.81,-73.08]};
+const sampleText=`POH
+CDL
+CLEVELAND , OH
+MADISONVILLE , KY
+500
+GMI
+NCDL
+BRISTOL , IN
+MADISON , TN
+446
+DRD
+NCDL
+BRISTOL , IN
+SALISBURY , NC
+634
+FLA
+NCDL
+ELOY , AZ
+PHOENIX , AZ
+99
+MCA
+CDL
+KANSAS CITY , KS
+DES MOINES , IA
+212
+POH
+CDL
+ATLANTA , GA
+TIFTON , GA
+190
+DRD
+NCDL
+BRISTOL , IN
+AKRON , OH
+260
+FLA
+NCDL
+MILLEDGEVILLE , GA
+TAMPA , FL
+412
+MCA
+CDL
+OCALA , FL
+ST ALBANS , VT
+1354
+POH
+CDL
+CLEVELAND , OH
+MADISONVILLE , KY
+500`;
+let S=JSON.parse(localStorage.LPsettings||'{}');S={home:'Louisville, KY',mpg:15,diesel:4.75,hotel:95,meals:35,tax:25,...S};
+let trips=JSON.parse(localStorage.LPtrips||'null')||[{id:1,term:'POH',orig:'Cleveland, OH',dest:'Madisonville, KY',miles:500,fuel:156,hotels:0,tolls:21,meals:28,ret:35,other:0,notes:'Good run. Ended close to Louisville.'},{id:2,term:'DRD',orig:'Bristol, IN',dest:'Salisbury, NC',miles:634,fuel:204,hotels:88,tolls:0,meals:42,ret:145,other:18,notes:'Return cost hurt profit.'}];
+let expenses=JSON.parse(localStorage.LPexpenses||'null')||[{id:1,date:'2026-06-08',cat:'Fuel',amt:156,trip:'POH Cleveland â Madisonville',file:'fuel.jpg'}];
+function $(id){return document.getElementById(id)}function money(n){return n.toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0})}function money2(n){return n.toLocaleString(undefined,{style:'currency',currency:'USD',minimumFractionDigits:2,maximumFractionDigits:2})}
+function saveAll(){localStorage.LPtrips=JSON.stringify(trips);localStorage.LPexpenses=JSON.stringify(expenses)}function saveSettings(){S={home:home.value,mpg:+mpg.value,diesel:+diesel.value,hotel:+hotel.value,meals:+meals.value,tax:+tax.value};localStorage.LPsettings=JSON.stringify(S);alert('Saved')}
+function init(){home.value=S.home;mpg.value=S.mpg;diesel.value=S.diesel;hotel.value=S.hotel;meals.value=S.meals;tax.value=S.tax;tTerm.innerHTML=Object.keys(rates).map(x=>`<option>${x}</option>`).join('');board.value=sampleText;analyze();render()}
+function tab(id,b){document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');b.classList.add('active');render()}
+function clean(x){return x.replace(/\s+,/g,',').replace(/\s+/g,' ').trim()}function key(x){return clean(x).toUpperCase()}function state(x){let a=x.split(',');return a.length>1?a.pop().trim().toUpperCase():''}
+function dist(place){let a=coords[key(S.home)]||coords['LOUISVILLE, KY'],b=coords[key(place)];if(!b)return null;let r=3958.8,to=x=>x*Math.PI/180,d1=to(b[0]-a[0]),d2=to(b[1]-a[1]),q=Math.sin(d1/2)**2+Math.cos(to(a[0]))*Math.cos(to(b[0]))*Math.sin(d2/2)**2;return Math.round(2*r*Math.asin(Math.sqrt(q))*1.18)}
+function parse(raw){let l=raw.split(/\n+/).map(x=>x.trim()).filter(Boolean),out=[];for(let i=0;i<=l.length-5;i+=5){let term=l[i].toUpperCase(),lic=l[i+1].toUpperCase(),orig=clean(l[i+2]),dest=clean(l[i+3]),m=+l[i+4];if(rates[term]&&!isNaN(m))out.push({term,lic,orig,dest,miles:m})}let g={};out.forEach(x=>{let k=JSON.stringify(x);g[k]=g[k]||{...x,count:0};g[k].count++});return Object.values(g)}
+function estimate(x){let rev=x.miles*rates[x.term][0],fuel=x.miles/S.mpg*S.diesel,days=Math.max(1,Math.ceil(x.miles/450)),hotels=Math.max(0,days-1)*S.hotel,meal=days*S.meals,pick=dist(x.orig),homeMiles=dist(x.dest),pickCost=(pick??280)*.45,returnCost=(homeMiles??400)*.45,chain=['IN','OH','GA','TX','FL'].includes(state(x.dest))?14:['NC','VA','MO','IA','WI','MI','PA'].includes(state(x.dest))?7:0,border=['ON','QC'].includes(state(x.dest))?75:0,profit=rev-fuel-hotels-meal-pickCost-returnCost-border,ppd=profit/days;let score=50+Math.max(-18,Math.min(24,(profit/x.miles)*32))+Math.max(-10,Math.min(18,ppd/20))+chain-(pick&&pick>450?14:pick&&pick<100?-0:-4)-(homeMiles&&homeMiles>650?16:0)-(border?8:0);if(x.lic==='NCDL')score+=2;if(x.count>1)score+=2;score=Math.max(1,Math.min(100,Math.round(score)));let reasons=[`${rates[x.term][1]} at ${money2(rates[x.term][0])}/mile`,`Pickup: ${pick??'unknown'} miles from Louisville`,`Return: ${homeMiles??'unknown'} miles to Louisville`,chain?'Good chaining region':'Review chaining options',border?'Canada: confirm paperwork/passport':''].filter(Boolean);return{rev,fuel,days,hotels,meal,pickCost,returnCost,profit,ppd,score,reasons}}
+function analyze(){saveSettings();let loads=parse(board.value),a=loads.map(x=>({...x,e:estimate(x)})).sort((a,b)=>b.e.score-a.e.score);summary.innerHTML=`<div class=pill><span>Loads</span><strong>${loads.reduce((s,x)=>s+x.count,0)}</strong></div><div class=pill><span>Routes</span><strong>${loads.length}</strong></div><div class=pill><span>Revenue</span><strong>${money(a.reduce((s,x)=>s+x.e.rev*x.count,0))}</strong></div><div class=pill><span>Best</span><strong>${a[0]?.e.score||0}/100</strong></div>`;results.innerHTML=a.map(x=>`<article class="card load ${x.e.score>=75?'good':x.e.score>=55?'warn':'bad'}"><div class=top><div><div class=route>${x.orig} â ${x.dest}</div><p><span class=badge>${x.term}</span><span class=badge>${x.lic}</span><span class=badge>${x.miles} mi</span>${x.count>1?`<span class=badge>${x.count} available</span>`:''}</p></div><div class=score>${x.e.score}/100</div></div><div class=details><div class=box><span>Revenue</span><strong>${money(x.e.rev)}</strong></div><div class=box><span>Fuel</span><strong>${money(x.e.fuel)}</strong></div><div class=box><span>Pickup</span><strong>${money(x.e.pickCost)}</strong></div><div class=box><span>Return</span><strong>${money(x.e.returnCost)}</strong></div><div class=box><span>Profit</span><strong>${money(x.e.profit)}</strong></div><div class=box><span>Profit/day</span><strong>${money(x.e.ppd)}</strong></div></div><ul>${x.e.reasons.map(r=>`<li>${r}</li>`).join('')}</ul><button class=secondary onclick='fillTrip(${JSON.stringify(x).replaceAll("'","&#39;")})'>Add as trip</button></article>`).join('')}
+function sample(){board.value=sampleText;analyze()}function fillTrip(x){tab('trips',document.querySelectorAll('.tab')[1]);tTerm.value=x.term;tOrig.value=x.orig;tDest.value=x.dest;tMiles.value=x.miles;tFuel.value=Math.round(x.e.fuel);tReturn.value=Math.round(x.e.returnCost)}
+function addTrip(){trips.push({id:Date.now(),term:tTerm.value,orig:tOrig.value,dest:tDest.value,miles:+tMiles.value,fuel:+tFuel.value,hotels:+tHotels.value,tolls:+tTolls.value,meals:+tMeals.value,ret:+tReturn.value,other:+tOther.value,notes:tNotes.value});saveAll();render();alert('Trip saved')}
+function addExpense(){expenses.push({id:Date.now(),date:eDate.value,cat:eCat.value,amt:+eAmt.value,trip:eTrip.value,file:eFile.files[0]?.name||''});saveAll();render();alert('Expense saved')}
+function delTrip(id){trips=trips.filter(x=>x.id!==id);saveAll();render()}function delExpense(id){expenses=expenses.filter(x=>x.id!==id);saveAll();render()}
+function render(){tripList.innerHTML=trips.map(t=>{let rev=t.miles*rates[t.term][0],cost=t.fuel+t.hotels+t.tolls+t.meals+t.ret+t.other,profit=rev-cost;return`<article class=card><div class=top><div><div class=route>${t.orig} â ${t.dest}</div><p><span class=badge>${t.term}</span><span class=badge>${t.miles} mi</span></p></div><div class=score>${money(profit)}</div></div><div class=details><div class=box><span>Revenue</span><strong>${money(rev)}</strong></div><div class=box><span>Expenses</span><strong>${money(cost)}</strong></div><div class=box><span>Profit/mile</span><strong>${money2(profit/t.miles)}</strong></div></div>${t.notes?`<p><b>Lessons:</b> ${t.notes}</p>`:''}<button class=danger onclick=delTrip(${t.id})>Delete</button></article>`}).join('');expenseList.innerHTML=expenses.map(e=>`<article class=card><div class=top><div><div class=route>${e.cat}</div><p>${e.date||''} ${e.trip?'â¢ '+e.trip:''}</p>${e.file?`<p>Receipt: ${e.file}</p>`:''}</div><div class=score>${money(e.amt)}</div></div><button class=danger onclick=delExpense(${e.id})>Delete</button></article>`).join('');let rev=trips.reduce((s,t)=>s+t.miles*rates[t.term][0],0),tc=trips.reduce((s,t)=>s+t.fuel+t.hotels+t.tolls+t.meals+t.ret+t.other,0),ec=expenses.reduce((s,e)=>s+e.amt,0),profit=rev-tc-ec,miles=trips.reduce((s,t)=>s+t.miles,0);metrics.innerHTML=`<div class="card metric"><span>Revenue</span><strong>${money(rev)}</strong></div><div class="card metric"><span>Expenses</span><strong>${money(tc+ec)}</strong></div><div class="card metric"><span>Net</span><strong>${money(profit)}</strong></div><div class="card metric"><span>Tax reserve</span><strong>${money(Math.max(0,profit*S.tax/100))}</strong></div><div class="card metric"><span>Profit/mile</span><strong>${miles?money2(profit/miles):'$0.00'}</strong></div>`;let by={};trips.forEach(t=>{let r=t.miles*rates[t.term][0],c=t.fuel+t.hotels+t.tolls+t.meals+t.ret+t.other;by[t.term]=(by[t.term]||0)+r-c});let entries=Object.entries(by).sort((a,b)=>b[1]-a[1]),max=Math.max(1,...entries.map(x=>Math.abs(x[1])));bars.innerHTML=entries.map(([k,v])=>`<div class=barrow><b>${k}</b><div class=track><div class=fill style="width:${Math.max(4,Math.abs(v)/max*100)}%"></div></div><span>${money(v)}</span></div>`).join('');best.innerHTML=trips.map(t=>{let p=t.miles*rates[t.term][0]-(t.fuel+t.hotels+t.tolls+t.meals+t.ret+t.other);return{...t,p}}).sort((a,b)=>b.p-a.p).slice(0,5).map(t=>`<div class=pill><b>${t.term}: ${t.orig} â ${t.dest}</b><p>${money(t.p)} profit</p></div>`).join('')}
+init();
+</script>
+</body>
+</html>
