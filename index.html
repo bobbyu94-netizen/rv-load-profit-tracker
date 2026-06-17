@@ -122,7 +122,7 @@ p.note{color:var(--muted);font-size:13px;margin:8px 0}
   </div>
 
   <div class="filter-bar">
-    <label>Max deadhead (mi)<input id="dhLimit" type="number" value="150" onchange="analyze()"></label>
+    <label>Max deadhead (mi)<input id="maxDeadhead" type="number" value="150" onchange="analyze()"></label>
     <span style="color:var(--muted);font-size:12px">Only known terminals &bull; Sorted by profit</span>
   </div>
 
@@ -374,7 +374,7 @@ function estimate(x) {
 
 function analyze() {
   saveSettings();
-  const dhLimit = +dhLimit.value || 150;
+  const dhLimit = +maxDeadhead.value || 150;
   const all = parse(board.value);
   const unknownTerm = [...new Set(all.filter(x=>!rates[x.term]).map(x=>x.term))];
   const known = all.filter(x => rates[x.term]);
