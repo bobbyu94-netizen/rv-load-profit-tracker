@@ -1,24 +1,266 @@
-<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>LoadPilot</title>
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LoadPilot</title>
 <style>
-body{margin:0;background:#0f172a;color:#e5e7eb;font-family:system-ui,-apple-system,Segoe UI,sans-serif}main,header{max-width:960px;margin:auto;padding:16px}h1{font-size:42px;margin:6px 0}.muted,p{color:#94a3b8}.card{background:#111c33;border:1px solid #ffffff22;border-radius:18px;padding:15px;margin:12px 0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}label{display:grid;gap:5px;color:#94a3b8;font-weight:800;font-size:13px}input,select,textarea{width:100%;border:1px solid #ffffff22;background:#02061788;color:#e5e7eb;border-radius:12px;padding:12px;font:inherit}textarea{min-height:150px}button{border:0;border-radius:999px;padding:12px 15px;background:#38bdf8;font-weight:900;color:#031422}.secondary{background:#334155;color:#e5e7eb}.danger{background:#7f1d1d;color:#fecaca}.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;position:sticky;top:0;background:#0f172a;padding:8px 0}.tab{background:#ffffff14;color:#e5e7eb}.tab.active{background:#38bdf8;color:#031422}.panel{display:none}.panel.active{display:block}.summary,.details{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:9px}.pill,.box{background:#ffffff12;border:1px solid #ffffff22;border-radius:14px;padding:11px}.pill span,.box span{display:block;color:#94a3b8;font-size:12px;font-weight:900;text-transform:uppercase}.pill strong,.box strong{font-size:21px}.load{border-left:6px solid #38bdf8}.good{border-left-color:#22c55e}.warn{border-left-color:#f59e0b}.bad{border-left-color:#ef4444}.top{display:flex;justify-content:space-between;gap:10px}.route{font-weight:950;font-size:18px}.score{font-weight:950;font-size:30px}.badge{display:inline-block;background:#38bdf824;color:#bae6fd;border-radius:999px;padding:4px 8px;margin:4px 4px 0 0;font-size:12px;font-weight:900}.switch{display:flex;justify-content:space-between;gap:10px;border:1px solid #ffffff22;background:#ffffff0c;border-radius:14px;padding:10px;margin:8px 0}.switch input{width:auto}.barrow{display:grid;grid-template-columns:60px 1fr 80px;gap:8px;align-items:center;margin:8px 0}.track{height:13px;background:#ffffff18;border-radius:999px;overflow:hidden}.fill{height:100%;background:#38bdf8}@media(max-width:600px){.top{display:block}.score{text-align:left}}
-</style></head><body>
-<header><div style="color:#38bdf8;font-weight:900;letter-spacing:.12em;text-transform:uppercase;font-size:12px">RV transport decision assistant</div><h1>LoadPilot</h1><p>Rank loads, call dispatch, adjust the real numbers, and save profit history.</p></header>
+:root{
+  --bg:#0b1120;
+  --surface:#111c33;
+  --surface2:#1a2744;
+  --border:#ffffff1a;
+  --accent:#38bdf8;
+  --accent-dim:#38bdf820;
+  --text:#e2e8f0;
+  --muted:#64748b;
+  --good:#22c55e;
+  --warn:#f59e0b;
+  --bad:#ef4444;
+  --font:'Inter',system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;line-height:1.5}
+a{color:var(--accent)}
+
+/* Layout */
+header{max-width:980px;margin:auto;padding:28px 20px 12px}
+main{max-width:980px;margin:auto;padding:0 20px 40px}
+.eyebrow{color:var(--accent);font-weight:800;letter-spacing:.14em;text-transform:uppercase;font-size:11px;margin-bottom:6px}
+h1{font-size:36px;font-weight:900;letter-spacing:-.02em;line-height:1.1;margin-bottom:6px}
+h1 span{color:var(--accent)}
+.tagline{color:var(--muted);font-size:14px;margin-bottom:24px}
+h2{font-size:17px;font-weight:800;margin-bottom:12px}
+h3{font-size:14px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:18px 0 8px}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:14px}
+
+/* Grid inputs */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:10px}
+label{display:grid;gap:5px;color:var(--muted);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+input,select,textarea{width:100%;border:1px solid var(--border);background:#02061788;color:var(--text);border-radius:10px;padding:10px 12px;font:inherit;font-size:14px;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+textarea{min-height:160px;resize:vertical}
+
+/* Buttons */
+button{border:0;border-radius:999px;padding:10px 18px;font:inherit;font-weight:800;font-size:13px;cursor:pointer;transition:opacity .15s}
+button:hover{opacity:.85}
+.btn-primary{background:var(--accent);color:#031422}
+.btn-secondary{background:#1e3a5f;color:var(--text)}
+.btn-danger{background:#7f1d1d;color:#fecaca}
+.btn-sm{padding:7px 14px;font-size:12px}
+
+/* Tabs */
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;position:sticky;top:0;z-index:10;background:var(--bg);padding:10px 0 12px;margin-bottom:4px;border-bottom:1px solid var(--border)}
+.tab{background:var(--surface2);color:var(--muted);border-radius:999px;font-weight:700;font-size:13px}
+.tab.active{background:var(--accent);color:#031422}
+.panel{display:none}.panel.active{display:block}
+
+/* Stat pills + boxes */
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:14px}
+.pill{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
+.pill span{display:block;color:var(--muted);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px}
+.pill strong{font-size:20px;font-weight:900}
+.details{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin:10px 0}
+.box{background:#ffffff09;border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+.box span{display:block;color:var(--muted);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
+.box strong{font-size:18px;font-weight:900}
+
+/* Load cards */
+.load{border-left:5px solid var(--accent)}
+.good{border-left-color:var(--good)}
+.warn{border-left-color:var(--warn)}
+.bad{border-left-color:var(--bad)}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px}
+.route{font-weight:900;font-size:17px;letter-spacing:-.01em}
+.score{font-weight:900;font-size:28px;line-height:1;color:var(--accent)}
+.score.good-score{color:var(--good)}.score.warn-score{color:var(--warn)}.score.bad-score{color:var(--bad)}
+
+/* Badges */
+.badge{display:inline-block;background:var(--accent-dim);color:#7dd3fc;border-radius:999px;padding:3px 9px;margin:3px 3px 0 0;font-size:11px;font-weight:800;letter-spacing:.04em}
+
+/* Switches */
+.switch{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid var(--border);background:#ffffff07;border-radius:12px;padding:11px 14px;margin:6px 0}
+.switch input[type=checkbox]{width:auto;accent-color:var(--accent)}
+.switch-label b{display:block;font-size:14px}
+.switch-label small{color:var(--muted);font-size:12px}
+
+/* Bars */
+.barrow{display:grid;grid-template-columns:56px 1fr 72px;gap:8px;align-items:center;margin:8px 0;font-size:13px}
+.track{height:10px;background:#ffffff14;border-radius:999px;overflow:hidden}
+.fill{height:100%;background:var(--accent);border-radius:999px;transition:width .4s ease}
+
+/* Warn banner */
+.warn-banner{background:#451a0388;border:1px solid #f59e0b44;color:#fcd34d;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;margin:6px 0}
+
+ul{padding-left:18px;color:var(--muted);font-size:13px}
+ul li{margin-bottom:4px}
+p.note{color:var(--muted);font-size:13px;margin:8px 0}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+
+@media(max-width:600px){.top{flex-direction:column}.score{font-size:22px}h1{font-size:26px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">RV Transport Decision Assistant</div>
+  <h1>Load<span>Pilot</span></h1>
+  <p class="tagline">Rank loads, evaluate dispatch calls, and track profit history.</p>
+</header>
 <main>
-<section class=card><h2>Assumptions</h2><div class=grid><label>Home base<input id=home value="Louisville, KY"></label><label>Loaded MPG<input id=mpg type=number value=15></label><label>Diesel<input id=diesel type=number step=.01 value=4.75></label><label>Hotel/night<input id=hotel type=number value=95></label><label>Meals/day<input id=meals type=number value=35></label><label>Tax %<input id=tax type=number value=25></label></div><p><button class=secondary onclick="saveSettings()">Save assumptions</button></p></section>
-<nav class=tabs><button class="tab active" onclick="tab('analyze',this)">Analyze</button><button class=tab onclick="tab('call',this)">Call</button><button class=tab onclick="tab('trips',this)">Trips</button><button class=tab onclick="tab('dashboard',this)">Dashboard</button></nav>
-<section id=analyze class="panel active"><div class=card><h2>Paste load board</h2><p>Order: terminal, CDL type, origin, destination, miles.</p><textarea id=board></textarea><p><button onclick="analyze()">Analyze loads</button> <button class=secondary onclick="sample()">Use sample</button></p></div><div id=summary class=summary></div><div id=results></div></section>
-<section id=call class=panel><div class=card><h2>Dispatch call evaluator</h2><div id=selectedLoad><p>No load selected yet.</p></div><div class=grid><label>Terminal<select id=cTerm></select></label><label>Origin<input id=cOrig></label><label>Destination<input id=cDest></label><label>Loaded miles<input id=cMiles type=number></label><label>Special pay / bonus<input id=cBonus type=number value=0></label><label>Delivery deadline<input id=cDeadline type=date></label></div>
-<h3>Cost switches</h3><div class=switch><div><b>Fuel provided / full tank</b><div class=muted>Sets loaded fuel to $0</div></div><input id=cFuelFree type=checkbox onchange="recalcCall()"></div><div class=switch><div><b>No hotel needed</b><div class=muted>Sets hotel to $0</div></div><input id=cNoHotel type=checkbox onchange="recalcCall()"></div><div class=switch><div><b>Meals covered / ignore meals</b><div class=muted>Sets meals to $0</div></div><input id=cNoMeals type=checkbox onchange="recalcCall()"></div><div class=switch><div><b>Return/chaining solved</b><div class=muted>Sets return cost to $0</div></div><input id=cReturnSolved type=checkbox onchange="recalcCall()"></div>
-<div class=grid><label>Fuel<input id=cFuel type=number onchange="recalcCall()"></label><label>Hotel<input id=cHotel type=number onchange="recalcCall()"></label><label>Meals<input id=cMeals type=number onchange="recalcCall()"></label><label>Tolls<input id=cTolls type=number value=0 onchange="recalcCall()"></label><label>Pickup/deadhead<input id=cPickup type=number onchange="recalcCall()"></label><label>Return/chaining<input id=cReturn type=number onchange="recalcCall()"></label></div>
-<h3>Dispatch notes</h3><div class=grid><label>Fuel level<select id=cFuelLevel><option>Unknown</option><option>Full</option><option>Half</option><option>Empty</option></select></label><label>Can chain?<select id=cChain onchange="recalcCall()"><option>Unknown</option><option>Likely</option><option>Maybe</option><option>No</option></select></label><label>Would take again?<select id=cAgain><option>Unknown</option><option>Yes</option><option>Maybe</option><option>No</option></select></label></div><label>Notes<textarea id=cNotes placeholder="Dispatcher said..."></textarea></label><div id=callResult class=summary></div><p><button onclick="saveCallTrip()">Save as trip</button> <button class=secondary onclick="recalcCall()">Recalculate</button></p></div>
-<div class=card><h3>Questions to ask dispatch</h3><ul><li>Is the RV fully fueled, partially fueled, or empty?</li><li>Pickup window and delivery deadline?</li><li>Any bonus, reimbursement, detention, or special pay?</li><li>Any tolls, border, permits, ferry, or paperwork?</li><li>Any damage, mechanical issue, or customer instruction?</li><li>Is there a realistic chaining opportunity near delivery?</li></ul></div></section>
-<section id=trips class=panel><div id=tripList></div></section>
-<section id=dashboard class=panel><div id=metrics class=summary></div><div class=card><h2>Profit by terminal</h2><div id=bars></div></div><div class=card><h2>Best trips</h2><div id=best></div></div></section>
+
+<!-- Assumptions -->
+<section class="card">
+  <h2>Assumptions</h2>
+  <div class="grid">
+    <label>Home base<input id="home" value="Louisville, KY"></label>
+    <label>Loaded MPG<input id="mpg" type="number" value="15"></label>
+    <label>Diesel $/gal<input id="diesel" type="number" step=".01" value="4.75"></label>
+    <label>Hotel/night<input id="hotel" type="number" value="95"></label>
+    <label>Meals/day<input id="meals" type="number" value="35"></label>
+    <label>Tax %<input id="tax" type="number" value="25"></label>
+  </div>
+  <button class="btn-secondary btn-sm" onclick="saveSettings()">Save assumptions</button>
+</section>
+
+<!-- Tabs -->
+<nav class="tabs">
+  <button class="tab active" onclick="tab('analyze',this)">Analyze</button>
+  <button class="tab" onclick="tab('call',this)">Call</button>
+  <button class="tab" onclick="tab('trips',this)">Trips</button>
+  <button class="tab" onclick="tab('dashboard',this)">Dashboard</button>
+</nav>
+
+<!-- Analyze -->
+<section id="analyze" class="panel active">
+  <div class="card">
+    <h2>Paste load board</h2>
+    <p class="note">Five lines per load: terminal, CDL type, origin, destination, miles.</p>
+    <textarea id="board"></textarea>
+    <div class="actions">
+      <button class="btn-primary" onclick="analyze()">Analyze loads</button>
+      <button class="btn-secondary" onclick="sample()">Use sample</button>
+    </div>
+  </div>
+  <div id="summary" class="summary"></div>
+  <div id="results"></div>
+</section>
+
+<!-- Call -->
+<section id="call" class="panel">
+  <div class="card">
+    <h2>Dispatch call evaluator</h2>
+    <div id="selectedLoad"><p class="note">Select a load from Analyze to pre-fill, or enter manually.</p></div>
+    <div class="grid">
+      <label>Terminal<select id="cTerm"></select></label>
+      <label>Origin<input id="cOrig"></label>
+      <label>Destination<input id="cDest"></label>
+      <label>Loaded miles<input id="cMiles" type="number"></label>
+      <label>Special pay / bonus<input id="cBonus" type="number" value="0"></label>
+      <label>Delivery deadline<input id="cDeadline" type="date"></label>
+    </div>
+
+    <h3>Cost switches</h3>
+    <div class="switch">
+      <div class="switch-label"><b>Fuel provided / full tank</b><small>Sets loaded fuel to $0</small></div>
+      <input id="cFuelFree" type="checkbox" onchange="recalcCall()">
+    </div>
+    <div class="switch">
+      <div class="switch-label"><b>No hotel needed</b><small>Sets hotel to $0</small></div>
+      <input id="cNoHotel" type="checkbox" onchange="recalcCall()">
+    </div>
+    <div class="switch">
+      <div class="switch-label"><b>Meals covered</b><small>Sets meals to $0</small></div>
+      <input id="cNoMeals" type="checkbox" onchange="recalcCall()">
+    </div>
+    <div class="switch">
+      <div class="switch-label"><b>Return / chaining solved</b><small>Sets return cost to $0</small></div>
+      <input id="cReturnSolved" type="checkbox" onchange="recalcCall()">
+    </div>
+
+    <h3>Cost breakdown</h3>
+    <div class="grid">
+      <label>Fuel<input id="cFuel" type="number" onchange="recalcCall()"></label>
+      <label>Hotel<input id="cHotel" type="number" onchange="recalcCall()"></label>
+      <label>Meals<input id="cMeals" type="number" onchange="recalcCall()"></label>
+      <label>Tolls<input id="cTolls" type="number" value="0" onchange="recalcCall()"></label>
+      <label>Pickup / deadhead<input id="cPickup" type="number" onchange="recalcCall()"></label>
+      <label>Return / chaining<input id="cReturn" type="number" onchange="recalcCall()"></label>
+    </div>
+
+    <h3>Dispatch notes</h3>
+    <div class="grid">
+      <label>Fuel level<select id="cFuelLevel"><option>Unknown</option><option>Full</option><option>Half</option><option>Empty</option></select></label>
+      <label>Can chain?<select id="cChain" onchange="recalcCall()"><option>Unknown</option><option>Likely</option><option>Maybe</option><option>No</option></select></label>
+      <label>Would take again?<select id="cAgain"><option>Unknown</option><option>Yes</option><option>Maybe</option><option>No</option></select></label>
+    </div>
+    <label style="margin-top:10px;display:grid;gap:5px;color:var(--muted);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.06em">Notes<textarea id="cNotes" placeholder="Dispatcher said..."></textarea></label>
+
+    <div id="callResult" class="summary" style="margin-top:14px"></div>
+    <div class="actions">
+      <button class="btn-primary" onclick="saveCallTrip()">Save as trip</button>
+      <button class="btn-secondary" onclick="recalcCall()">Recalculate</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Questions to ask dispatch</h3>
+    <ul>
+      <li>Is the RV fully fueled, partially fueled, or empty?</li>
+      <li>Pickup window and delivery deadline?</li>
+      <li>Any bonus, reimbursement, detention, or special pay?</li>
+      <li>Any tolls, border crossings, permits, or paperwork?</li>
+      <li>Any damage, mechanical issues, or customer instructions?</li>
+      <li>Is there a realistic chaining opportunity near the delivery?</li>
+    </ul>
+  </div>
+</section>
+
+<!-- Trips -->
+<section id="trips" class="panel">
+  <div id="tripList"></div>
+</section>
+
+<!-- Dashboard -->
+<section id="dashboard" class="panel">
+  <div id="metrics" class="summary"></div>
+  <div class="card"><h2>Profit by terminal</h2><div id="bars"></div></div>
+  <div class="card"><h2>Best trips</h2><div id="best"></div></div>
+</section>
+
 </main>
 <script>
-const rates={FLA:[1.15,'PTR'],POH:[1.52,'PETE'],DRD:[1.17,'RV'],GMI:[1.12,'Box'],MCA:[1.12,'MCA']};
-const coords={'LOUISVILLE, KY':[38.25,-85.76],'BRISTOL, IN':[41.72,-85.82],'CLEVELAND, OH':[41.5,-81.69],'MADISONVILLE, KY':[37.33,-87.5],'MADISON, TN':[36.26,-86.71],'SALISBURY, NC':[35.67,-80.47],'ELOY, AZ':[32.76,-111.55],'PHOENIX, AZ':[33.45,-112.07],'KANSAS CITY, KS':[39.11,-94.63],'DES MOINES, IA':[41.59,-93.63],'ATLANTA, GA':[33.75,-84.39],'TIFTON, GA':[31.45,-83.51],'AKRON, OH':[41.08,-81.52],'MILLEDGEVILLE, GA':[33.08,-83.23],'TAMPA, FL':[27.95,-82.46],'OCALA, FL':[29.19,-82.14],'ST ALBANS, VT':[44.81,-73.08]};
-const sampleText=`POH
+// ── Terminal rates: [$/mile, vehicle type label] ──
+const rates = {
+  FLA: [1.15, 'PTR'],
+  POH: [1.52, 'PETE'],
+  DRD: [1.17, 'RV'],
+  GMI: [1.12, 'Box'],
+  MCA: [1.12, 'MCA']
+};
+
+// ── Known city coordinates [lat, lng] ──
+const coords = {
+  'LOUISVILLE, KY':    [38.25, -85.76],
+  'BRISTOL, IN':       [41.72, -85.82],
+  'CLEVELAND, OH':     [41.50, -81.69],
+  'MADISONVILLE, KY':  [37.33, -87.50],
+  'MADISON, TN':       [36.26, -86.71],
+  'SALISBURY, NC':     [35.67, -80.47],
+  'ELOY, AZ':          [32.76,-111.55],
+  'PHOENIX, AZ':       [33.45,-112.07],
+  'KANSAS CITY, KS':   [39.11, -94.63],
+  'DES MOINES, IA':    [41.59, -93.63],
+  'ATLANTA, GA':       [33.75, -84.39],
+  'TIFTON, GA':        [31.45, -83.51],
+  'AKRON, OH':         [41.08, -81.52],
+  'MILLEDGEVILLE, GA': [33.08, -83.23],
+  'TAMPA, FL':         [27.95, -82.46],
+  'OCALA, FL':         [29.19, -82.14],
+  'ST ALBANS, VT':     [44.81, -73.08]
+};
+
+const sampleText = `POH
 CDL
 CLEVELAND , OH
 MADISONVILLE , KY
@@ -43,21 +285,306 @@ CDL
 OCALA , FL
 ST ALBANS , VT
 1354`;
-let S=JSON.parse(localStorage.LPsettings||'{}');S={home:'Louisville, KY',mpg:15,diesel:4.75,hotel:95,meals:35,tax:25,...S};let trips=JSON.parse(localStorage.LPtrips3||'[]'),current=null;
-function money(n){return Number(n||0).toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0})}function money2(n){return Number(n||0).toLocaleString(undefined,{style:'currency',currency:'USD',minimumFractionDigits:2,maximumFractionDigits:2})}
-function saveSettings(){S={home:home.value,mpg:+mpg.value,diesel:+diesel.value,hotel:+hotel.value,meals:+meals.value,tax:+tax.value};localStorage.LPsettings=JSON.stringify(S)}function saveTrips(){localStorage.LPtrips3=JSON.stringify(trips)}
-function init(){home.value=S.home;mpg.value=S.mpg;diesel.value=S.diesel;hotel.value=S.hotel;meals.value=S.meals;tax.value=S.tax;cTerm.innerHTML=Object.keys(rates).map(x=>`<option>${x}</option>`).join('');board.value=sampleText;analyze();render()}
-function tab(id,b){document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');b.classList.add('active');render()}
-function clean(x){return x.replace(/\s+,/g,',').replace(/\s+/g,' ').trim()}function key(x){return clean(x).toUpperCase()}function state(x){let a=x.split(',');return a.length>1?a.pop().trim().toUpperCase():''}
-function dist(place){let a=coords[key(S.home)]||coords['LOUISVILLE, KY'],b=coords[key(place)];if(!b)return null;let r=3958.8,to=x=>x*Math.PI/180,d1=to(b[0]-a[0]),d2=to(b[1]-a[1]),q=Math.sin(d1/2)**2+Math.cos(to(a[0]))*Math.cos(to(b[0]))*Math.sin(d2/2)**2;return Math.round(2*r*Math.asin(Math.sqrt(q))*1.18)}
-function parse(raw){let l=raw.split(/\n+/).map(x=>x.trim()).filter(Boolean),out=[];for(let i=0;i<=l.length-5;i+=5){let term=l[i].toUpperCase(),lic=l[i+1].toUpperCase(),orig=clean(l[i+2]),dest=clean(l[i+3]),m=+l[i+4];if(rates[term]&&!isNaN(m))out.push({term,lic,orig,dest,miles:m})}return out}
-function estimate(x){let rev=x.miles*rates[x.term][0],fuel=x.miles/S.mpg*S.diesel,days=Math.max(1,Math.ceil(x.miles/450)),hotels=Math.max(0,days-1)*S.hotel,meal=days*S.meals,pick=dist(x.orig),homeMiles=dist(x.dest),pickCost=(pick??280)*.45,returnCost=(homeMiles??400)*.45,chain=['IN','OH','GA','TX','FL'].includes(state(x.dest))?14:0,profit=rev-fuel-hotels-meal-pickCost-returnCost,ppd=profit/days,score=Math.max(1,Math.min(100,Math.round(50+(profit/x.miles)*32+ppd/20+chain)));return{rev,fuel,days,hotels,meal,pickCost,returnCost,profit,ppd,score,pick,homeMiles}}
-function analyze(){saveSettings();let a=parse(board.value).map(x=>({...x,e:estimate(x)})).sort((a,b)=>b.e.score-a.e.score);summary.innerHTML=`<div class=pill><span>Routes</span><strong>${a.length}</strong></div><div class=pill><span>Best</span><strong>${a[0]?.e.score||0}/100</strong></div>`;results.innerHTML=a.map((x,i)=>`<article class="card load ${x.e.score>=75?'good':x.e.score>=55?'warn':'bad'}"><div class=top><div><div class=route>${x.orig} â ${x.dest}</div><p><span class=badge>${x.term}</span><span class=badge>${x.lic}</span><span class=badge>${x.miles} mi</span></p></div><div class=score>${x.e.score}/100</div></div><div class=details><div class=box><span>Revenue</span><strong>${money(x.e.rev)}</strong></div><div class=box><span>Fuel</span><strong>${money(x.e.fuel)}</strong></div><div class=box><span>Pickup</span><strong>${money(x.e.pickCost)}</strong></div><div class=box><span>Return</span><strong>${money(x.e.returnCost)}</strong></div><div class=box><span>Profit</span><strong>${money(x.e.profit)}</strong></div><div class=box><span>Profit/day</span><strong>${money(x.e.ppd)}</strong></div></div><ul><li>${rates[x.term][1]} at ${money2(rates[x.term][0])}/mile</li><li>Ask dispatch about fuel level and chaining.</li></ul><button class=secondary onclick='selectLoad(${JSON.stringify(x).replaceAll("'","&#39;")})'>Call dispatch</button></article>`).join('')}
-function sample(){board.value=sampleText;analyze()}
-function selectLoad(x){current=x;cTerm.value=x.term;cOrig.value=x.orig;cDest.value=x.dest;cMiles.value=x.miles;cBonus.value=0;cFuelFree.checked=false;cNoHotel.checked=false;cNoMeals.checked=false;cReturnSolved.checked=false;cFuel.value=Math.round(x.e.fuel);cHotel.value=Math.round(x.e.hotels);cMeals.value=Math.round(x.e.meal);cTolls.value=0;cPickup.value=Math.round(x.e.pickCost);cReturn.value=Math.round(x.e.returnCost);cFuelLevel.value='Unknown';cChain.value='Unknown';cAgain.value='Unknown';cNotes.value='';selectedLoad.innerHTML=`<div class=route>${x.orig} â ${x.dest}</div><p><span class=badge>${x.term}</span><span class=badge>${x.lic}</span><span class=badge>${x.miles} mi</span></p>`;recalcCall();tab('call',document.querySelectorAll('.tab')[1])}
-function recalcCall(){let term=cTerm.value,m=+cMiles.value,rev=m*rates[term][0]+(+cBonus.value||0),fuel=cFuelFree.checked?0:+cFuel.value,hotels=cNoHotel.checked?0:+cHotel.value,meal=cNoMeals.checked?0:+cMeals.value,ret=cReturnSolved.checked?0:+cReturn.value,cost=fuel+hotels+meal+(+cTolls.value)+(+cPickup.value)+ret,profit=rev-cost,score=Math.max(1,Math.min(100,Math.round(50+(profit/m)*35+(profit/Math.max(1,Math.ceil(m/450)))/20+(cFuelFree.checked?8:0)+(cReturnSolved.checked?10:0)+(cChain.value==='Likely'?10:cChain.value==='No'?-8:0))));callResult.innerHTML=`<div class=pill><span>Revenue</span><strong>${money(rev)}</strong></div><div class=pill><span>Costs</span><strong>${money(cost)}</strong></div><div class=pill><span>Profit</span><strong>${money(profit)}</strong></div><div class=pill><span>Score</span><strong>${score}/100</strong></div><div class=pill><span>Profit/mile</span><strong>${money2(profit/m)}</strong></div><div class=pill><span>Tax reserve</span><strong>${money(Math.max(0,profit*S.tax/100))}</strong></div>`;return{term,orig:cOrig.value,dest:cDest.value,miles:m,rev,cost,profit,score,fuel,hotels,meals:meal,tolls:+cTolls.value,pickup:+cPickup.value,ret,bonus:+cBonus.value,notes:cNotes.value,fuelLevel:cFuelLevel.value,chain:cChain.value,again:cAgain.value}}
-function saveCallTrip(){let t=recalcCall();t.id=Date.now();trips.push(t);saveTrips();render();alert('Trip saved')}
-function render(){tripList.innerHTML=trips.map(t=>`<article class=card><div class=top><div><div class=route>${t.orig} â ${t.dest}</div><p><span class=badge>${t.term}</span><span class=badge>${t.miles} mi</span><span class=badge>${t.fuelLevel}</span><span class=badge>Chain: ${t.chain}</span></p></div><div class=score>${money(t.profit)}</div></div><div class=details><div class=box><span>Revenue</span><strong>${money(t.rev)}</strong></div><div class=box><span>Costs</span><strong>${money(t.cost)}</strong></div><div class=box><span>Score</span><strong>${t.score}/100</strong></div><div class=box><span>Again?</span><strong>${t.again}</strong></div></div>${t.notes?`<p><b>Dispatch notes:</b> ${t.notes}</p>`:''}<button class=danger onclick="delTrip(${t.id})">Delete</button></article>`).join('')||'<div class=card><p>No trips saved yet.</p></div>';let rev=trips.reduce((s,t)=>s+t.rev,0),cost=trips.reduce((s,t)=>s+t.cost,0),profit=rev-cost,miles=trips.reduce((s,t)=>s+t.miles,0);metrics.innerHTML=`<div class=pill><span>Revenue</span><strong>${money(rev)}</strong></div><div class=pill><span>Costs</span><strong>${money(cost)}</strong></div><div class=pill><span>Net</span><strong>${money(profit)}</strong></div><div class=pill><span>Tax reserve</span><strong>${money(Math.max(0,profit*S.tax/100))}</strong></div><div class=pill><span>Profit/mile</span><strong>${miles?money2(profit/miles):'$0.00'}</strong></div>`;let by={};trips.forEach(t=>by[t.term]=(by[t.term]||0)+t.profit);let entries=Object.entries(by).sort((a,b)=>b[1]-a[1]),max=Math.max(1,...entries.map(x=>Math.abs(x[1])));bars.innerHTML=entries.map(([k,v])=>`<div class=barrow><b>${k}</b><div class=track><div class=fill style="width:${Math.max(4,Math.abs(v)/max*100)}%"></div></div><span>${money(v)}</span></div>`).join('');best.innerHTML=trips.slice().sort((a,b)=>b.profit-a.profit).slice(0,5).map(t=>`<div class=pill><b>${t.term}: ${t.orig} â ${t.dest}</b><p>${money(t.profit)} profit â¢ take again: ${t.again}</p></div>`).join('')}
-function delTrip(id){trips=trips.filter(t=>t.id!==id);saveTrips();render()}
+
+let S = JSON.parse(localStorage.LPsettings || '{}');
+S = { home:'Louisville, KY', mpg:15, diesel:4.75, hotel:95, meals:35, tax:25, ...S };
+let trips = JSON.parse(localStorage.LPtrips3 || '[]');
+
+// ── Formatters ──
+const money  = n => Number(n||0).toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0});
+const money2 = n => Number(n||0).toLocaleString(undefined,{style:'currency',currency:'USD',minimumFractionDigits:2,maximumFractionDigits:2});
+
+// ── Settings ──
+function saveSettings() {
+  S = {
+    home:   home.value,
+    mpg:    +mpg.value,
+    diesel: +diesel.value,
+    hotel:  +hotel.value,
+    meals:  +meals.value,
+    tax:    +tax.value
+  };
+  localStorage.LPsettings = JSON.stringify(S);
+}
+function saveTrips() { localStorage.LPtrips3 = JSON.stringify(trips); }
+
+// ── Boot ──
+function init() {
+  home.value   = S.home;
+  mpg.value    = S.mpg;
+  diesel.value = S.diesel;
+  hotel.value  = S.hotel;
+  meals.value  = S.meals;
+  tax.value    = S.tax;
+  cTerm.innerHTML = Object.keys(rates).map(x => `<option>${x}</option>`).join('');
+  board.value = sampleText;
+  analyze();
+  render();
+}
+
+// ── Tab switching ──
+function tab(id, b) {
+  document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  b.classList.add('active');
+  render();
+}
+
+// ── Text helpers ──
+function clean(x) { return x.replace(/\s+,/g, ',').replace(/\s+/g, ' ').trim(); }
+function key(x)   { return clean(x).toUpperCase(); }
+function state(x) { let a = x.split(','); return a.length > 1 ? a.pop().trim().toUpperCase() : ''; }
+
+// ── Haversine distance from home ──
+function dist(place) {
+  let a = coords[key(S.home)] || coords['LOUISVILLE, KY'];
+  let b = coords[key(place)];
+  if (!b) return null; // unknown city
+  const R = 3958.8, rad = x => x * Math.PI / 180;
+  const d1 = rad(b[0]-a[0]), d2 = rad(b[1]-a[1]);
+  const q  = Math.sin(d1/2)**2 + Math.cos(rad(a[0]))*Math.cos(rad(b[0]))*Math.sin(d2/2)**2;
+  return Math.round(2 * R * Math.asin(Math.sqrt(q)) * 1.18);
+}
+
+// ── Parse load board text ──
+function parse(raw) {
+  let lines = raw.split(/\n+/).map(x => x.trim()).filter(Boolean), out = [];
+  for (let i = 0; i <= lines.length - 5; i += 5) {
+    let term = lines[i].toUpperCase(), lic = lines[i+1].toUpperCase();
+    let orig = clean(lines[i+2]), dest = clean(lines[i+3]), m = +lines[i+4];
+    if (rates[term] && !isNaN(m)) out.push({ term, lic, orig, dest, miles: m });
+  }
+  return out;
+}
+
+// ── Cost estimate ──
+function estimate(x) {
+  // Always refresh S from current inputs so Call tab stays in sync
+  S.mpg    = +mpg.value;
+  S.diesel = +diesel.value;
+  S.hotel  = +hotel.value;
+  S.meals  = +meals.value;
+  S.tax    = +tax.value;
+
+  const rev   = x.miles * rates[x.term][0];
+  const fuel  = x.miles / S.mpg * S.diesel;
+  const days  = Math.max(1, Math.ceil(x.miles / 450));
+  const hotels = Math.max(0, days - 1) * S.hotel;
+  const meal  = days * S.meals;
+
+  const pickMiles = dist(x.orig);
+  const homeMiles = dist(x.dest);
+  const pickUnknown  = pickMiles  === null;
+  const returnUnknown = homeMiles === null;
+
+  const pickCost   = (pickMiles  ?? 280) * 0.45;
+  const returnCost = (homeMiles  ?? 400) * 0.45;
+
+  const chainBonus = ['IN','OH','GA','TX','FL'].includes(state(x.dest)) ? 14 : 0;
+  const profit = rev - fuel - hotels - meal - pickCost - returnCost;
+  const ppd    = profit / days;
+  const score  = Math.max(1, Math.min(100, Math.round(
+    50 + (profit/x.miles)*32 + ppd/20 + chainBonus
+  )));
+
+  return { rev, fuel, days, hotels, meal, pickCost, returnCost,
+           profit, ppd, score, pickMiles, homeMiles, pickUnknown, returnUnknown };
+}
+
+// ── Analyze tab ──
+function analyze() {
+  saveSettings();
+  const loads = parse(board.value).map(x => ({ ...x, e: estimate(x) }))
+                                   .sort((a,b) => b.e.score - a.e.score);
+
+  summary.innerHTML = `
+    <div class="pill"><span>Routes</span><strong>${loads.length}</strong></div>
+    <div class="pill"><span>Best score</span><strong>${loads[0]?.e.score || 0}/100</strong></div>`;
+
+  results.innerHTML = loads.map(x => {
+    const sc = x.e.score >= 75 ? 'good' : x.e.score >= 55 ? 'warn' : 'bad';
+    const scoreClass = sc + '-score';
+    const unknownWarning = (x.e.pickUnknown || x.e.returnUnknown)
+      ? `<div class="warn-banner">&#9888; ${[x.e.pickUnknown ? 'Origin "'+x.orig+'"' : '', x.e.returnUnknown ? 'Destination "'+x.dest+'"' : ''].filter(Boolean).join(' and ')} not in coordinate map — pickup/return cost is estimated.</div>`
+      : '';
+    return `
+    <article class="card load ${sc}">
+      <div class="top">
+        <div>
+          <div class="route">${x.orig} &rarr; ${x.dest}</div>
+          <p><span class="badge">${x.term}</span><span class="badge">${x.lic}</span><span class="badge">${x.miles} mi</span></p>
+        </div>
+        <div class="score ${scoreClass}">${x.e.score}/100</div>
+      </div>
+      ${unknownWarning}
+      <div class="details">
+        <div class="box"><span>Revenue</span><strong>${money(x.e.rev)}</strong></div>
+        <div class="box"><span>Fuel</span><strong>${money(x.e.fuel)}</strong></div>
+        <div class="box"><span>Pickup</span><strong>${money(x.e.pickCost)}</strong></div>
+        <div class="box"><span>Return</span><strong>${money(x.e.returnCost)}</strong></div>
+        <div class="box"><span>Profit</span><strong>${money(x.e.profit)}</strong></div>
+        <div class="box"><span>Profit/day</span><strong>${money(x.e.ppd)}</strong></div>
+      </div>
+      <ul style="margin-top:8px">
+        <li>${rates[x.term][1]} at ${money2(rates[x.term][0])}/mile</li>
+        <li>Ask dispatch about fuel level and chaining.</li>
+      </ul>
+      <div class="actions">
+        <button class="btn-secondary btn-sm" onclick='selectLoad(${JSON.stringify(x).replaceAll("'","&#39;")})'>Call dispatch &rarr;</button>
+      </div>
+    </article>`;
+  }).join('');
+}
+
+function sample() { board.value = sampleText; analyze(); }
+
+// ── Select load into Call tab ──
+function selectLoad(x) {
+  const e = estimate(x);
+  cTerm.value  = x.term;
+  cOrig.value  = x.orig;
+  cDest.value  = x.dest;
+  cMiles.value = x.miles;
+  cBonus.value = 0;
+  cFuelFree.checked    = false;
+  cNoHotel.checked     = false;
+  cNoMeals.checked     = false;
+  cReturnSolved.checked = false;
+  cFuel.value   = Math.round(e.fuel);
+  cHotel.value  = Math.round(e.hotels);
+  cMeals.value  = Math.round(e.meal);
+  cTolls.value  = 0;
+  cPickup.value = Math.round(e.pickCost);
+  cReturn.value = Math.round(e.returnCost);
+  cFuelLevel.value = 'Unknown';
+  cChain.value     = 'Unknown';
+  cAgain.value     = 'Unknown';
+  cNotes.value     = '';
+  selectedLoad.innerHTML = `
+    <div class="route">${x.orig} &rarr; ${x.dest}</div>
+    <p><span class="badge">${x.term}</span><span class="badge">${x.lic}</span><span class="badge">${x.miles} mi</span></p>`;
+  recalcCall();
+  tab('call', document.querySelectorAll('.tab')[1]);
+}
+
+// ── Recalc Call tab ──
+function recalcCall() {
+  // Pull fresh settings from inputs (fixes stale-settings bug)
+  S.diesel = +diesel.value;
+  S.hotel  = +hotel.value;
+  S.meals  = +meals.value;
+  S.tax    = +tax.value;
+  S.mpg    = +mpg.value;
+
+  const term  = cTerm.value;
+  const m     = +cMiles.value || 1;
+  const rev   = m * rates[term][0] + (+cBonus.value || 0);
+  const fuel  = cFuelFree.checked    ? 0 : +cFuel.value;
+  const hotels = cNoHotel.checked    ? 0 : +cHotel.value;
+  const meal  = cNoMeals.checked     ? 0 : +cMeals.value;
+  const ret   = cReturnSolved.checked ? 0 : +cReturn.value;
+  const cost  = fuel + hotels + meal + (+cTolls.value) + (+cPickup.value) + ret;
+  const profit = rev - cost;
+  const days  = Math.max(1, Math.ceil(m / 450));
+  const score = Math.max(1, Math.min(100, Math.round(
+    50 + (profit/m)*35 + (profit/days)/20
+    + (cFuelFree.checked ? 8 : 0)
+    + (cReturnSolved.checked ? 10 : 0)
+    + (cChain.value === 'Likely' ? 10 : cChain.value === 'No' ? -8 : 0)
+  )));
+  const taxReserve = Math.max(0, profit * S.tax / 100);
+
+  callResult.innerHTML = `
+    <div class="pill"><span>Revenue</span><strong>${money(rev)}</strong></div>
+    <div class="pill"><span>Costs</span><strong>${money(cost)}</strong></div>
+    <div class="pill"><span>Profit</span><strong>${money(profit)}</strong></div>
+    <div class="pill"><span>After tax est.</span><strong>${money(profit - taxReserve)}</strong></div>
+    <div class="pill"><span>Score</span><strong>${score}/100</strong></div>
+    <div class="pill"><span>Profit/mile</span><strong>${money2(profit/m)}</strong></div>
+    <div class="pill"><span>Tax reserve</span><strong>${money(taxReserve)}</strong></div>`;
+
+  return { term, orig: cOrig.value, dest: cDest.value, miles: m, rev, cost, profit, score,
+           fuel, hotels, meals: meal, tolls: +cTolls.value, pickup: +cPickup.value, ret,
+           bonus: +cBonus.value, notes: cNotes.value,
+           fuelLevel: cFuelLevel.value, chain: cChain.value, again: cAgain.value };
+}
+
+function saveCallTrip() {
+  const t = recalcCall();
+  t.id = Date.now();
+  trips.push(t);
+  saveTrips();
+  render();
+  alert('Trip saved!');
+}
+
+// ── Render Trips + Dashboard ──
+function render() {
+  tripList.innerHTML = trips.map(t => `
+    <article class="card">
+      <div class="top">
+        <div>
+          <div class="route">${t.orig} &rarr; ${t.dest}</div>
+          <p>
+            <span class="badge">${t.term}</span>
+            <span class="badge">${t.miles} mi</span>
+            <span class="badge">${t.fuelLevel}</span>
+            <span class="badge">Chain: ${t.chain}</span>
+          </p>
+        </div>
+        <div class="score">${money(t.profit)}</div>
+      </div>
+      <div class="details">
+        <div class="box"><span>Revenue</span><strong>${money(t.rev)}</strong></div>
+        <div class="box"><span>Costs</span><strong>${money(t.cost)}</strong></div>
+        <div class="box"><span>Score</span><strong>${t.score}/100</strong></div>
+        <div class="box"><span>Again?</span><strong>${t.again}</strong></div>
+      </div>
+      ${t.notes ? `<p class="note" style="margin-top:8px"><b>Notes:</b> ${t.notes}</p>` : ''}
+      <div class="actions"><button class="btn-danger btn-sm" onclick="delTrip(${t.id})">Delete</button></div>
+    </article>`).join('') || '<div class="card"><p class="note">No trips saved yet.</p></div>';
+
+  const rev    = trips.reduce((s,t) => s+t.rev,   0);
+  const cost   = trips.reduce((s,t) => s+t.cost,  0);
+  const profit = rev - cost;
+  const miles  = trips.reduce((s,t) => s+t.miles, 0);
+  const taxR   = Math.max(0, profit * S.tax / 100);
+
+  metrics.innerHTML = `
+    <div class="pill"><span>Revenue</span><strong>${money(rev)}</strong></div>
+    <div class="pill"><span>Costs</span><strong>${money(cost)}</strong></div>
+    <div class="pill"><span>Net profit</span><strong>${money(profit)}</strong></div>
+    <div class="pill"><span>After tax est.</span><strong>${money(profit - taxR)}</strong></div>
+    <div class="pill"><span>Tax reserve</span><strong>${money(taxR)}</strong></div>
+    <div class="pill"><span>Profit/mile</span><strong>${miles ? money2(profit/miles) : '$0.00'}</strong></div>`;
+
+  const by = {};
+  trips.forEach(t => by[t.term] = (by[t.term]||0) + t.profit);
+  const entries = Object.entries(by).sort((a,b) => b[1]-a[1]);
+  const max = Math.max(1, ...entries.map(x => Math.abs(x[1])));
+  bars.innerHTML = entries.map(([k,v]) => `
+    <div class="barrow">
+      <b>${k}</b>
+      <div class="track"><div class="fill" style="width:${Math.max(4, Math.abs(v)/max*100)}%"></div></div>
+      <span>${money(v)}</span>
+    </div>`).join('') || '<p class="note">No trips yet.</p>';
+
+  best.innerHTML = trips.slice().sort((a,b) => b.profit-a.profit).slice(0,5).map(t => `
+    <div class="pill">
+      <b>${t.term}: ${t.orig} &rarr; ${t.dest}</b>
+      <p class="note">${money(t.profit)} profit &bull; take again: ${t.again}</p>
+    </div>`).join('') || '<p class="note">No trips yet.</p>';
+}
+
+function delTrip(id) {
+  if (!confirm('Delete this trip?')) return;
+  trips = trips.filter(t => t.id !== id);
+  saveTrips();
+  render();
+}
+
 init();
-</script></body></html>
+</script>
+</body>
+</html>
