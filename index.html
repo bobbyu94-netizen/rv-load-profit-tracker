@@ -22,6 +22,7 @@
     <label>Tax %<input id="tax" type="number" value="25"></label>
     <label>Fly-back threshold (mi)<input id="flightMiles" type="number" value="1500"></label>
     <label>Fly-back cost cap ($)<input id="flightCap" type="number" value="600"></label>
+    <label>Chain leg-1 limit (mi)<input id="chainMiles" type="number" value="800"></label>
   </div>
   <button class="btn-secondary btn-sm" onclick="saveSettings()">Save assumptions</button>
 </section>
@@ -48,6 +49,7 @@
 
   <div id="summary" class="summary"></div>
   <div id="skipped"></div>
+  <div id="chains"></div>
   <div id="results"></div>
 </section>
 

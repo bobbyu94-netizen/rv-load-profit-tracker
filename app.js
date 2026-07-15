@@ -10,7 +10,7 @@ const rates = {
 const coords = CITY_COORDS;
 
 let S = JSON.parse(localStorage.LPsettings || '{}');
-S = { home:'Louisville, KY', mpg:15, diesel:4.75, hotel:95, meals:35, tax:25, flightMiles:1500, flightCap:600, ...S };
+S = { home:'Louisville, KY', mpg:15, diesel:4.75, hotel:95, meals:35, tax:25, flightMiles:1500, flightCap:600, chainMiles:800, ...S };
 let trips = JSON.parse(localStorage.LPtrips3 || '[]');
 
 const money  = n => Number(n||0).toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0});
@@ -18,7 +18,7 @@ const money2 = n => Number(n||0).toLocaleString(undefined,{style:'currency',curr
 
 function saveSettings() {
   S = { home:home.value, mpg:+mpg.value, diesel:+diesel.value, hotel:+hotel.value, meals:+meals.value, tax:+tax.value,
-    flightMiles:+flightMiles.value, flightCap:+flightCap.value };
+    flightMiles:+flightMiles.value, flightCap:+flightCap.value, chainMiles:+chainMiles.value };
   localStorage.LPsettings = JSON.stringify(S);
 }
 function saveTrips() { localStorage.LPtrips3 = JSON.stringify(trips); }
@@ -26,7 +26,7 @@ function saveTrips() { localStorage.LPtrips3 = JSON.stringify(trips); }
 function init() {
   home.value=S.home; mpg.value=S.mpg; diesel.value=S.diesel;
   hotel.value=S.hotel; meals.value=S.meals; tax.value=S.tax;
-  flightMiles.value=S.flightMiles; flightCap.value=S.flightCap;
+  flightMiles.value=S.flightMiles; flightCap.value=S.flightCap; chainMiles.value=S.chainMiles;
   cTerm.innerHTML = Object.keys(rates).map(x=>`<option>${x}</option>`).join('');
   analyze();
   render();
@@ -105,6 +105,58 @@ function estimate(x) {
   return { rev, fuel, days, hotels, meal, dhCost, dhMiles, returnCost, homeMiles, flightMode, profit, ppd, score };
 }
 
+function chainMetrics(l1, l2, dhLimit) {
+  const connectMiles = distBetween(l1.dest, l2.orig);
+  if (connectMiles === null || connectMiles > dhLimit) return null;
+  const connectCost  = connectMiles * 0.45;
+  const leg1Profit   = l1.e.profit + l1.e.returnCost;
+  const leg2Profit   = l2.e.rev - l2.e.fuel - l2.e.hotels - l2.e.meal - connectCost;
+  const homeMiles    = distBetween(l2.dest, S.home);
+  const flightMode   = homeMiles !== null && homeMiles > S.flightMiles;
+  const finalReturn  = flightMode ? S.flightCap : (homeMiles ?? 400) * 0.45;
+  const days         = l1.e.days + l2.e.days;
+  const profit       = leg1Profit + leg2Profit - finalReturn;
+  return { l1, l2, connectMiles, leg1Profit, leg2Profit, finalReturn, homeMiles, flightMode, days,
+    profit, ppd: profit / days, uplift: profit - l1.e.profit };
+}
+
+function findChains(filtered, allKnown, dhLimit) {
+  const limit = +chainMiles.value || 800;
+  const chains = [];
+  filtered.forEach(l1 => {
+    if (l1.miles > limit) return;
+    allKnown.forEach(l2 => {
+      if (l1 === l2) return;
+      const m = chainMetrics(l1, l2, dhLimit);
+      if (m && m.uplift > 0) chains.push(m);
+    });
+  });
+  chains.sort((a, b) => b.ppd - a.ppd);
+  return chains.slice(0, 3);
+}
+
+function renderChains(chainList) {
+  document.getElementById('chains').innerHTML = chainList.map(c => `
+    <article class="card chain">
+      <div class="top">
+        <span class="badge badge-chain">&#128279; Chain found</span>
+        <span class="note">${c.days} day${c.days > 1 ? 's' : ''} on road</span>
+      </div>
+      <div class="chain-route">${c.l1.orig} &rarr; ${c.l1.dest} &rarr; ${c.l2.dest} &rarr; home</div>
+      <div class="details">
+        <div class="box"><span>Chain profit</span><strong>${money(c.profit)}</strong></div>
+        <div class="box"><span>Profit/day</span><strong>${money(c.ppd)}</strong></div>
+        <div class="box"><span>vs solo leg 1</span><strong>${money(c.uplift)}</strong></div>
+      </div>
+      <ul style="margin-top:8px">
+        <li>${c.l1.term} &middot; ${c.l1.orig} &rarr; ${c.l1.dest} &middot; ${c.l1.miles} mi &middot; ${money(c.leg1Profit)}</li>
+        <li>${c.l2.term} &middot; ${c.l2.orig} &rarr; ${c.l2.dest} &middot; ${c.l2.miles} mi &middot; ${money(c.leg2Profit)}</li>
+        <li>${c.flightMode ? 'Fly' : 'Drive'} home &middot; ${c.l2.dest} &rarr; ${S.home} &middot; -${money(c.finalReturn)}</li>
+      </ul>
+      <div class="warn-banner">&#9888; Leg 2 is a location match only &mdash; the board has no pickup dates, so confirm it's still posted before committing.</div>
+    </article>`).join('');
+}
+
 function analyze() {
   saveSettings();
   const dhLimit = +maxDeadhead.value || 150;
@@ -112,17 +164,20 @@ function analyze() {
   const unknownTerm = [...new Set(all.filter(x=>!rates[x.term]).map(x=>x.term))];
   const known = all.filter(x => rates[x.term]);
   const seen = new Set();
-  const filtered = [], outOfRange = [], unknownLoc = [];
+  const filtered = [], outOfRange = [], unknownLoc = [], allKnown = [];
   known.forEach(x => {
     const dh = distFromHome(x.orig);
     if (dh === null) { unknownLoc.push(x); return; }
-    if (dh > dhLimit) { outOfRange.push({...x, dh}); return; }
     const k = `${x.term}|${x.orig}|${x.dest}|${x.miles}`;
     if (seen.has(k)) return;
     seen.add(k);
-    filtered.push({...x, e: estimate(x), dh});
+    const entry = {...x, e: estimate(x), dh};
+    allKnown.push(entry);
+    if (dh > dhLimit) { outOfRange.push(entry); return; }
+    filtered.push(entry);
   });
   filtered.sort((a,b) => b.e.profit - a.e.profit);
+  renderChains(findChains(filtered, allKnown, dhLimit));
   summary.innerHTML = `
     <div class="pill"><span>Matching loads</span><strong>${filtered.length}</strong></div>
     <div class="pill"><span>Best profit</span><strong>${filtered[0] ? money(filtered[0].e.profit) : '—'}</strong></div>`;
