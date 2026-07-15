@@ -16,6 +16,7 @@
 body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;line-height:1.5}
 a{color:var(--accent)}
 header{max-width:980px;margin:auto;padding:28px 20px 12px}
+.header-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
 main{max-width:980px;margin:auto;padding:0 20px 40px}
 .eyebrow{color:var(--accent);font-weight:800;letter-spacing:.14em;text-transform:uppercase;font-size:11px;margin-bottom:6px}
 h1{font-size:36px;font-weight:900;letter-spacing:-.02em;line-height:1.1;margin-bottom:6px}
@@ -36,7 +37,7 @@ button:hover{opacity:.85}
 .btn-danger{background:#7f1d1d;color:#fecaca}
 .btn-sm{padding:7px 14px;font-size:12px}
 .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;position:sticky;top:0;z-index:10;background:var(--bg);padding:10px 0 12px;margin-bottom:4px;border-bottom:1px solid var(--border)}
-.tab{background:var(--surface2);color:var(--muted);border-radius:999px;font-weight:700;font-size:13px}
+.tab{background:var(--surface2);color:var(--muted);border-radius:999px;font-weight:700;font-size:13px;min-width:0;padding:10px 6px}
 .tab.active{background:var(--accent);color:#031422}
 .panel{display:none}.panel.active{display:block}
 .summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:14px}
@@ -64,9 +65,8 @@ button:hover{opacity:.85}
 .barrow{display:grid;grid-template-columns:56px 1fr 72px;gap:8px;align-items:center;margin:8px 0;font-size:13px}
 .track{height:10px;background:#ffffff14;border-radius:999px;overflow:hidden}
 .fill{height:100%;background:var(--accent);border-radius:999px;transition:width .4s ease}
-.filter-bar{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 16px;margin-bottom:14px;flex-wrap:wrap}
-.filter-bar label{flex-direction:row;align-items:center;gap:8px;color:var(--muted);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin:0}
-.filter-bar input[type=number]{width:70px;padding:6px 10px}
+.inline-field{display:flex;flex-direction:row;align-items:center;gap:8px;color:var(--muted);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin:0}
+.inline-field input[type=number]{width:70px;padding:8px 10px}
 .skipped-banner{background:#1e3a5f44;border:1px solid #38bdf833;color:#7dd3fc;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;margin-bottom:10px}
 ul{padding-left:18px;color:var(--muted);font-size:13px}
 ul li{margin-bottom:4px}

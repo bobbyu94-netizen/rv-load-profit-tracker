@@ -7,13 +7,18 @@
 </head>
 <body>
 <header>
-  <div class="eyebrow">RV Transport Decision Assistant</div>
-  <h1>Load<span>Pilot</span></h1>
-  <p class="tagline">Shortest deadhead. Most profit. Fast call list.</p>
+  <div class="header-top">
+    <div>
+      <div class="eyebrow">RV Transport Decision Assistant</div>
+      <h1>Load<span>Pilot</span></h1>
+      <p class="tagline">Shortest deadhead. Most profit. Fast call list.</p>
+    </div>
+    <button class="btn-secondary btn-sm" onclick="toggleSettings()">&#9881; Settings</button>
+  </div>
 </header>
 <main>
 
-<section class="card">
+<section id="settingsPanel" class="card" hidden>
   <h2>Assumptions</h2>
   <div class="grid">
     <label>Home base<input id="home" value="Louisville, KY"></label>
@@ -43,12 +48,9 @@
       <button class="btn-primary" onclick="analyze()">Analyze loads</button>
       <button class="btn-secondary" onclick="sample()">Use sample</button>
       <button class="btn-secondary" onclick="clearBoard()">Clear</button>
+      <label class="inline-field">Max deadhead (mi)<input id="maxDeadhead" type="number" value="150" onchange="analyze()"></label>
     </div>
-  </div>
-
-  <div class="filter-bar">
-    <label>Max deadhead (mi)<input id="maxDeadhead" type="number" value="150" onchange="analyze()"></label>
-    <span style="color:var(--muted);font-size:12px">Only known terminals &bull; Sorted by profit</span>
+    <p class="note">Only known terminals &bull; Sorted by profit</p>
   </div>
 
   <div id="summary" class="summary"></div>

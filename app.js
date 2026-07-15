@@ -65,6 +65,8 @@ function tab(id, b) {
   render();
 }
 
+function toggleSettings() { settingsPanel.hidden = !settingsPanel.hidden; }
+
 function clean(x) { return x.replace(/\s+,/g,',').replace(/\s+/g,' ').trim(); }
 function key(x)   {
   return clean(x).toUpperCase().replace(/[.']/g,'').replace(/^SAINT\s+/,'ST ');
@@ -143,8 +145,7 @@ function analyze() {
   filtered.sort((a,b) => b.e.profit - a.e.profit);
   summary.innerHTML = `
     <div class="pill"><span>Matching loads</span><strong>${filtered.length}</strong></div>
-    <div class="pill"><span>Best profit</span><strong>${filtered[0] ? money(filtered[0].e.profit) : '—'}</strong></div>
-    <div class="pill"><span>Deadhead limit</span><strong>${dhLimit} mi</strong></div>`;
+    <div class="pill"><span>Best profit</span><strong>${filtered[0] ? money(filtered[0].e.profit) : '—'}</strong></div>`;
   let skippedParts = [];
   if (unknownTerm.length) skippedParts.push(`Unknown terminals skipped: ${unknownTerm.join(', ')}`);
   const dedupedCount = known.filter(x=>{ const dh=distFromHome(x.orig); return dh!==null && dh<=dhLimit; }).length - filtered.length;
