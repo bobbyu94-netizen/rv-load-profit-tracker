@@ -9,32 +9,6 @@ const rates = {
 
 const coords = CITY_COORDS;
 
-const sampleText = `FLA
-CDL
-FORT WAYNE , IN
-DECATUR , AL
-515
-DRD
-CDL
-DECATUR , IN
-PERRY , IA
-521
-DRD
-CDL
-DECATUR , IN
-WEST CHESTER , PA
-580
-MCA
-CDL
-HENDERSON , KY
-MADISON , WI
-446
-MCA
-NCDL
-INDIANAPOLIS , IN
-BERWYN , PA
-641`;
-
 let S = JSON.parse(localStorage.LPsettings || '{}');
 S = { home:'Louisville, KY', mpg:15, diesel:4.75, hotel:95, meals:35, tax:25, ...S };
 let trips = JSON.parse(localStorage.LPtrips3 || '[]');
@@ -52,7 +26,6 @@ function init() {
   home.value=S.home; mpg.value=S.mpg; diesel.value=S.diesel;
   hotel.value=S.hotel; meals.value=S.meals; tax.value=S.tax;
   cTerm.innerHTML = Object.keys(rates).map(x=>`<option>${x}</option>`).join('');
-  board.value = sampleText;
   analyze();
   render();
 }
@@ -197,8 +170,6 @@ function analyze() {
     </article>`;
   }).join('');
 }
-
-function sample() { board.value = sampleText; analyze(); }
 
 function clearBoard() { board.value = ''; analyze(); }
 

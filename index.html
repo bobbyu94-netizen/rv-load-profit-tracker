@@ -7,14 +7,7 @@
 </head>
 <body>
 <header>
-  <div class="header-top">
-    <div>
-      <div class="eyebrow">RV Transport Decision Assistant</div>
-      <h1>Load<span>Pilot</span></h1>
-      <p class="tagline">Shortest deadhead. Most profit. Fast call list.</p>
-    </div>
-    <button class="btn-secondary btn-sm" onclick="toggleSettings()">&#9881; Settings</button>
-  </div>
+  <button class="btn-secondary btn-sm" onclick="toggleSettings()">Assumptions</button>
 </header>
 <main>
 
@@ -42,11 +35,9 @@
 <section id="analyze" class="panel active">
   <div class="card">
     <h2>Paste load board</h2>
-    <p class="note">Five lines per load: terminal, CDL type, origin, destination, miles. Unknown terminals and origins beyond the deadhead limit are filtered out automatically.</p>
     <textarea id="board"></textarea>
     <div class="actions">
       <button class="btn-primary" onclick="analyze()">Analyze loads</button>
-      <button class="btn-secondary" onclick="sample()">Use sample</button>
       <button class="btn-secondary" onclick="clearBoard()">Clear</button>
       <label class="inline-field">Max deadhead (mi)<input id="maxDeadhead" type="number" value="150" onchange="analyze()"></label>
     </div>
