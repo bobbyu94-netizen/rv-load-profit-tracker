@@ -10,14 +10,15 @@ const rates = {
 const coords = CITY_COORDS;
 
 let S = JSON.parse(localStorage.LPsettings || '{}');
-S = { home:'Louisville, KY', mpg:15, diesel:4.75, hotel:95, meals:35, tax:25, ...S };
+S = { home:'Louisville, KY', mpg:15, diesel:4.75, hotel:95, meals:35, tax:25, flightMiles:1500, flightCap:600, ...S };
 let trips = JSON.parse(localStorage.LPtrips3 || '[]');
 
 const money  = n => Number(n||0).toLocaleString(undefined,{style:'currency',currency:'USD',maximumFractionDigits:0});
 const money2 = n => Number(n||0).toLocaleString(undefined,{style:'currency',currency:'USD',minimumFractionDigits:2,maximumFractionDigits:2});
 
 function saveSettings() {
-  S = { home:home.value, mpg:+mpg.value, diesel:+diesel.value, hotel:+hotel.value, meals:+meals.value, tax:+tax.value };
+  S = { home:home.value, mpg:+mpg.value, diesel:+diesel.value, hotel:+hotel.value, meals:+meals.value, tax:+tax.value,
+    flightMiles:+flightMiles.value, flightCap:+flightCap.value };
   localStorage.LPsettings = JSON.stringify(S);
 }
 function saveTrips() { localStorage.LPtrips3 = JSON.stringify(trips); }
@@ -25,6 +26,7 @@ function saveTrips() { localStorage.LPtrips3 = JSON.stringify(trips); }
 function init() {
   home.value=S.home; mpg.value=S.mpg; diesel.value=S.diesel;
   hotel.value=S.hotel; meals.value=S.meals; tax.value=S.tax;
+  flightMiles.value=S.flightMiles; flightCap.value=S.flightCap;
   cTerm.innerHTML = Object.keys(rates).map(x=>`<option>${x}</option>`).join('');
   analyze();
   render();
@@ -60,6 +62,10 @@ function distFromHome(place) {
   return Math.round(haversine(a, b) * 1.25);
 }
 
+function flightSearchUrl(from, to) {
+  return `https://www.google.com/travel/flights?q=${encodeURIComponent(`Flights to ${to} from ${from}`)}`;
+}
+
 function distBetween(placeA, placeB) {
   const a = coords[key(placeA)];
   const b = coords[key(placeB)];
@@ -88,14 +94,15 @@ function estimate(x) {
   const dhMiles    = distFromHome(x.orig);
   const homeMiles  = distBetween(x.dest, S.home);
   const dhCost     = (dhMiles   ?? 150) * 0.45;
-  const returnCost = (homeMiles ?? 400) * 0.45;
+  const flightMode = homeMiles !== null && homeMiles > S.flightMiles;
+  const returnCost = flightMode ? S.flightCap : (homeMiles ?? 400) * 0.45;
   const chainBonus = ['IN','OH','GA','TX','FL'].includes(state(x.dest)) ? 14 : 0;
   const profit = rev - fuel - hotels - meal - dhCost - returnCost;
   const ppd    = profit / days;
   const score  = Math.max(1, Math.min(100, Math.round(
     50 + (profit/x.miles)*32 + ppd/20 + chainBonus
   )));
-  return { rev, fuel, days, hotels, meal, dhCost, dhMiles, returnCost, homeMiles, profit, ppd, score };
+  return { rev, fuel, days, hotels, meal, dhCost, dhMiles, returnCost, homeMiles, flightMode, profit, ppd, score };
 }
 
 function analyze() {
@@ -156,16 +163,18 @@ function analyze() {
         <div class="box"><span>Revenue</span><strong>${money(x.e.rev)}</strong></div>
         <div class="box"><span>Fuel</span><strong>${money(x.e.fuel)}</strong></div>
         <div class="box"><span>Deadhead</span><strong>${money(x.e.dhCost)}</strong></div>
-        <div class="box"><span>Return est.</span><strong>${money(x.e.returnCost)}</strong></div>
+        <div class="box"><span>${x.e.flightMode?'Fly back est.':'Return est.'}</span><strong>${money(x.e.returnCost)}</strong></div>
         <div class="box"><span>Hotel+meals</span><strong>${money(x.e.hotels+x.e.meal)}</strong></div>
         <div class="box"><span>Profit/day</span><strong>${money(x.e.ppd)}</strong></div>
       </div>
       <ul style="margin-top:8px">
         <li>${rates[x.term][1]} at ${money2(rates[x.term][0])}/mile &bull; ${x.e.days} day${x.e.days>1?'s':''}</li>
         <li>Ask dispatch about fuel level and chaining.</li>
+        ${x.e.flightMode ? `<li>${x.e.homeMiles} mi home &mdash; capped at flight estimate instead of driving.</li>` : ''}
       </ul>
       <div class="actions">
         <button class="btn-secondary btn-sm" onclick='selectLoad(${JSON.stringify(x).replaceAll("'","&#39;")})'>Call dispatch &rarr;</button>
+        ${x.e.flightMode ? `<a class="btn-secondary btn-sm" href="${flightSearchUrl(x.dest, S.home)}" target="_blank" rel="noopener">&#9992; Search flights</a>` : ''}
       </div>
     </article>`;
   }).join('');
@@ -207,6 +216,13 @@ function recalcCall() {
     +(cChain.value==='Likely'?10:cChain.value==='No'?-8:0)
   )));
   const taxR=Math.max(0,profit*S.tax/100);
+  const homeMiles = cDest.value ? distBetween(cDest.value, S.home) : null;
+  if (homeMiles !== null && homeMiles > S.flightMiles) {
+    flightLink.href = flightSearchUrl(cDest.value, S.home);
+    flightLink.hidden = false;
+  } else {
+    flightLink.hidden = true;
+  }
   callResult.innerHTML=`
     <div class="pill"><span>Revenue</span><strong>${money(rev)}</strong></div>
     <div class="pill"><span>Costs</span><strong>${money(cost)}</strong></div>

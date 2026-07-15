@@ -20,6 +20,8 @@
     <label>Hotel/night<input id="hotel" type="number" value="95"></label>
     <label>Meals/day<input id="meals" type="number" value="35"></label>
     <label>Tax %<input id="tax" type="number" value="25"></label>
+    <label>Fly-back threshold (mi)<input id="flightMiles" type="number" value="1500"></label>
+    <label>Fly-back cost cap ($)<input id="flightCap" type="number" value="600"></label>
   </div>
   <button class="btn-secondary btn-sm" onclick="saveSettings()">Save assumptions</button>
 </section>
@@ -89,6 +91,9 @@
       <label>Tolls<input id="cTolls" type="number" value="0" onchange="recalcCall()"></label>
       <label>Deadhead cost<input id="cPickup" type="number" onchange="recalcCall()"></label>
       <label>Return / chaining<input id="cReturn" type="number" onchange="recalcCall()"></label>
+    </div>
+    <div class="actions">
+      <a id="flightLink" class="btn-secondary btn-sm" href="#" target="_blank" rel="noopener" hidden>&#9992; Search flights back</a>
     </div>
 
     <h3>Dispatch notes</h3>
